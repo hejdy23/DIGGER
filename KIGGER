@@ -1,0 +1,495 @@
+-- nigger you better not skid you nigger pigger digger sigger igger sicker licker nicker snicker
+
+local ui = {}
+
+function ui:Window(title)
+    local gui = Instance.new("ScreenGui")
+    gui.Parent = game.CoreGui
+
+    local main = Instance.new("Frame")
+    main.Size = UDim2.new(0,420,0,360)
+    main.Position = UDim2.new(.5,-210,.5,-180)
+    main.BackgroundColor3 = Color3.fromRGB(0,0,0)
+    main.Active = true
+    main.Draggable = true
+    main.ZIndex = 10
+    main.Parent = gui
+    Instance.new("UICorner", main).CornerRadius = UDim.new(0,12)
+
+    local outline = Instance.new("Frame")
+    outline.Size = UDim2.new(1,8,1,8)
+    outline.Position = UDim2.new(0,-4,0,-4)
+    outline.BackgroundColor3 = Color3.fromRGB(255,0,0)
+    outline.BorderSizePixel = 0
+    outline.ZIndex = 9
+    outline.Parent = main
+    Instance.new("UICorner", outline).CornerRadius = UDim.new(0,14)
+
+    task.spawn(function()
+        local h = 0
+        while outline.Parent do
+            h = (h + 1) % 360
+            outline.BackgroundColor3 = Color3.fromHSV(h/360,1,1)
+            task.wait(.02)
+        end
+    end)
+
+    local titleLabel = Instance.new("TextLabel")
+    titleLabel.Size = UDim2.new(1,0,0,45)
+    titleLabel.BackgroundTransparency = 1
+    titleLabel.Text = title
+    titleLabel.Font = Enum.Font.GothamBold
+    titleLabel.TextSize = 24
+    titleLabel.TextColor3 = Color3.new(1,1,1)
+    titleLabel.ZIndex = 10
+    titleLabel.Parent = main
+
+    local tabs = Instance.new("Frame")
+    tabs.Size = UDim2.new(0,130,1,-45)
+    tabs.Position = UDim2.new(0,0,0,45)
+    tabs.BackgroundColor3 = Color3.fromRGB(0,0,0)
+    tabs.ZIndex = 10
+    tabs.Parent = main
+
+    local list = Instance.new("UIListLayout")
+    list.Parent = tabs
+    list.Padding = UDim.new(0,6)
+
+    local pages = Instance.new("Frame")
+    pages.Size = UDim2.new(1,-130,1,-45)
+    pages.Position = UDim2.new(0,130,0,45)
+    pages.BackgroundColor3 = Color3.fromRGB(0,0,0)
+    pages.ZIndex = 10
+    pages.Parent = main
+
+    return {
+        Tabs = tabs,
+        Pages = pages,
+        Main = main
+    }
+end
+
+function ui:Tab(win, name)
+    local btn = Instance.new("TextButton")
+    btn.Size = UDim2.new(1,-10,0,38)
+    btn.BackgroundColor3 = Color3.fromRGB(10,10,10)
+    btn.Text = name
+    btn.Font = Enum.Font.GothamBold
+    btn.TextSize = 16
+    btn.TextColor3 = Color3.new(1,1,1)
+    btn.ZIndex = 10
+    btn.Parent = win.Tabs
+    Instance.new("UICorner", btn).CornerRadius = UDim.new(0,8)
+
+    local page = Instance.new("ScrollingFrame")
+    page.Size = UDim2.new(1,0,1,0)
+    page.CanvasSize = UDim2.new(0,0,0,0)
+    page.ScrollBarThickness = 4
+    page.BackgroundColor3 = Color3.fromRGB(0,0,0)
+    page.Visible = false
+    page.ZIndex = 10
+    page.Parent = win.Pages
+
+    local layout = Instance.new("UIListLayout")
+    layout.Parent = page
+    layout.Padding = UDim.new(0,10)
+
+    layout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+        page.CanvasSize = UDim2.new(0,0,0,layout.AbsoluteContentSize.Y + 20)
+    end)
+
+    btn.MouseButton1Click:Connect(function()
+        for _,p in ipairs(win.Pages:GetChildren()) do
+            if p:IsA("ScrollingFrame") then
+                p.Visible = false
+            end
+        end
+        page.Visible = true
+    end)
+
+    return page
+end
+
+function ui:Toggle(page, name, callback)
+    local t = Instance.new("TextButton")
+    t.Size = UDim2.new(1,-14,0,45)
+    t.BackgroundColor3 = Color3.fromRGB(25,25,25)
+    t.Text = name .. ": OFF"
+    t.Font = Enum.Font.GothamBold
+    t.TextSize = 18
+    t.TextColor3 = Color3.new(1,1,1)
+    t.ZIndex = 10
+    t.Parent = page
+    Instance.new("UICorner", t).CornerRadius = UDim.new(0,10)
+
+    local state = false
+
+    t.MouseButton1Click:Connect(function()
+        state = not state
+        t.Text = name .. (state and ": ON" or ": OFF")
+        t.BackgroundColor3 = state and Color3.fromRGB(0,140,0) or Color3.fromRGB(25,25,25)
+        callback(state)
+    end)
+end
+
+function ui:Button(page, name, callback)
+    local b = Instance.new("TextButton")
+    b.Size = UDim2.new(1,-14,0,45)
+    b.BackgroundColor3 = Color3.fromRGB(25,25,25)
+    b.Text = name
+    b.Font = Enum.Font.GothamBold
+    b.TextSize = 18
+    b.TextColor3 = Color3.new(1,1,1)
+    b.ZIndex = 10
+    b.Parent = page
+    Instance.new("UICorner", b).CornerRadius = UDim.new(0,10)
+
+    b.MouseButton1Click:Connect(callback)
+end
+
+function ui:Dropdown(win, page, name, list, callback)
+    local frame = Instance.new("Frame")
+    frame.Size = UDim2.new(1,-14,0,60)
+    frame.BackgroundColor3 = Color3.fromRGB(20,20,20)
+    frame.ZIndex = 10
+    frame.Parent = page
+    Instance.new("UICorner", frame).CornerRadius = UDim.new(0,10)
+
+    local label = Instance.new("TextLabel")
+    label.Size = UDim2.new(1,0,0,20)
+    label.BackgroundTransparency = 1
+    label.Text = name
+    label.Font = Enum.Font.GothamBold
+    label.TextSize = 16
+    label.TextColor3 = Color3.new(1,1,1)
+    label.ZIndex = 11
+    label.Parent = frame
+
+    local drop = Instance.new("TextButton")
+    drop.Size = UDim2.new(1,-20,0,25)
+    drop.Position = UDim2.new(0,10,0,25)
+    drop.BackgroundColor3 = Color3.fromRGB(40,40,40)
+    drop.Text = "Select"
+    drop.Font = Enum.Font.GothamBold
+    drop.TextSize = 14
+    drop.TextColor3 = Color3.new(1,1,1)
+    drop.ZIndex = 11
+    drop.Parent = frame
+    Instance.new("UICorner", drop).CornerRadius = UDim.new(0,6)
+
+    local optionHolder = Instance.new("Frame")
+    optionHolder.BackgroundColor3 = Color3.fromRGB(30,30,30)
+    optionHolder.Visible = false
+    optionHolder.ZIndex = 1000
+    optionHolder.Parent = win.Main
+    Instance.new("UICorner", optionHolder).CornerRadius = UDim.new(0,6)
+
+    local layout = Instance.new("UIListLayout")
+    layout.Parent = optionHolder
+    layout.Padding = UDim.new(0,2)
+
+    local open = false
+
+    drop.MouseButton1Click:Connect(function()
+        open = not open
+        optionHolder.Visible = open
+
+        if open then
+            for _,child in ipairs(optionHolder:GetChildren()) do
+                if child:IsA("TextButton") then child:Destroy() end
+            end
+
+            for _,v in ipairs(list) do
+                local opt = Instance.new("TextButton")
+                opt.Size = UDim2.new(1,0,0,22)
+                opt.BackgroundColor3 = Color3.fromRGB(50,50,50)
+                opt.Text = v
+                opt.Font = Enum.Font.GothamBold
+                opt.TextSize = 14
+                opt.TextColor3 = Color3.new(1,1,1)
+                opt.ZIndex = 1001
+                opt.Parent = optionHolder
+                Instance.new("UICorner", opt).CornerRadius = UDim.new(0,4)
+
+                opt.MouseButton1Click:Connect(function()
+                    drop.Text = v
+                    callback(v)
+                    optionHolder.Visible = false
+                    open = false
+                end)
+            end
+
+            task.defer(function()
+                local guiPos = win.Main.AbsolutePosition
+                local guiSize = win.Main.AbsoluteSize
+                local absPos = frame.AbsolutePosition
+
+                optionHolder.Position = UDim2.fromOffset(
+                    guiPos.X + guiSize.X + 10,
+                    absPos.Y
+                )
+
+                optionHolder.Size = UDim2.fromOffset(
+                    drop.AbsoluteSize.X,
+                    layout.AbsoluteContentSize.Y
+                )
+            end)
+        end
+    end)
+
+    return {
+        Update = function(newList)
+            list = newList
+        end
+    }
+end
+
+function ui:Slider(page, name, min, max, default, callback)
+    local frame = Instance.new("Frame")
+    frame.Size = UDim2.new(1,-14,0,60)
+    frame.BackgroundColor3 = Color3.fromRGB(20,20,20)
+    frame.ZIndex = 10
+    frame.Parent = page
+    Instance.new("UICorner", frame).CornerRadius = UDim.new(0,10)
+
+    local label = Instance.new("TextLabel")
+    label.Size = UDim2.new(1,0,0,20)
+    label.BackgroundTransparency = 1
+    label.Text = name .. ": " .. string.format("%.2f", default)
+    label.Font = Enum.Font.GothamBold
+    label.TextSize = 16
+    label.TextColor3 = Color3.new(1,1,1)
+    label.ZIndex = 10
+    label.Parent = frame
+
+    local bar = Instance.new("Frame")
+    bar.Size = UDim2.new(1,-20,0,10)
+    bar.Position = UDim2.new(0,10,0,35)
+    bar.BackgroundColor3 = Color3.fromRGB(40,40,40)
+    bar.ZIndex = 10
+    bar.Parent = frame
+    Instance.new("UICorner", bar).CornerRadius = UDim.new(0,5)
+
+    local fill = Instance.new("Frame")
+    fill.Size = UDim2.new((default-min)/(max-min),0,1,0)
+    fill.BackgroundColor3 = Color3.fromRGB(0,140,0)
+    fill.ZIndex = 11
+    fill.Parent = bar
+    Instance.new("UICorner", fill).CornerRadius = UDim.new(0,5)
+
+    local dragging = false
+
+    bar.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            dragging = true
+        end
+    end)
+
+    bar.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            dragging = false
+        end
+    end)
+
+    game:GetService("UserInputService").InputChanged:Connect(function(input)
+        if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+            local rel = math.clamp((input.Position.X - bar.AbsolutePosition.X) / bar.AbsoluteSize.X, 0, 1)
+            fill.Size = UDim2.new(rel,0,1,0)
+            local value = min + (max-min) * rel
+            label.Text = name .. ": " .. string.format("%.2f", value)
+            callback(value)
+        end
+    end)
+end
+
+local win = ui:Window("Darecxek Hub")
+
+local farm = ui:Tab(win, "Farming")
+farm.Visible = true
+
+local remotes = game:GetService("ReplicatedStorage"):WaitForChild("Remotes")
+
+local clickRemote = remotes:WaitForChild("Click")
+local critRemote = remotes:WaitForChild("CritClick")
+local flipRemote = remotes:WaitForChild("ToggleAutoflip")
+local rewardRemote = remotes:WaitForChild("TimeReward")
+local spinRemote = remotes:WaitForChild("RequestSpin")
+local rebirthRemote = remotes:WaitForChild("Rebirth")
+
+local autoClick = false
+local autoCrit = false
+
+ui:Toggle(farm, "Auto Clicker", function(state)
+    autoClick = state
+    if state then
+        task.spawn(function()
+            while autoClick do
+                clickRemote:FireServer()
+                task.wait(.1)
+            end
+        end)
+    end
+end)
+
+ui:Toggle(farm, "Auto Critical Hit", function(state)
+    autoCrit = state
+    if state then
+        task.spawn(function()
+            while autoCrit do
+                critRemote:FireServer()
+                task.wait(.1)
+            end
+        end)
+    end
+end)
+
+ui:Toggle(farm, "Auto Flip", function(state)
+    flipRemote:FireServer(state)
+end)
+
+ui:Toggle(farm, "Auto Time Reward", function(state)
+    if state then
+        task.spawn(function()
+            while state do
+                rewardRemote:InvokeServer("claim")
+                task.wait(30)
+            end
+        end)
+    end
+end)
+
+ui:Toggle(farm, "Auto Spin", function(state)
+    if state then
+        task.spawn(function()
+            while state do
+                spinRemote:InvokeServer()
+                task.wait(5)
+            end
+        end)
+    end
+end)
+
+ui:Toggle(farm, "Auto Rebirth", function(state)
+    if state then
+        task.spawn(function()
+            while state do
+                rebirthRemote:InvokeServer()
+                task.wait(1)
+            end
+        end)
+    end
+end)
+
+local crates = ui:Tab(win, "Crates")
+
+local crateList = {
+    "wooden","iron","crystal","toxic","shadow","cosmic",
+    "chaos","nether","wizard","obsidian","heaven","luckyblock"
+}
+
+local selectedCrate = crateList[1]
+local amountToOpen = 1
+local autoSpeed = 1.00
+
+local crateDrop = ui:Dropdown(win, crates, "Select Crate", crateList, function(sel)
+    selectedCrate = sel
+end)
+
+ui:Slider(crates, "Crates To Open", 1, 50, 1, function(val)
+    amountToOpen = val
+end)
+
+local buyRemote = remotes:WaitForChild("BuyCase")
+
+ui:Button(crates, "Buy 1 Crate", function()
+    buyRemote:InvokeServer(selectedCrate)
+end)
+
+ui:Button(crates, "Buy " .. tostring(amountToOpen) .. " Crates", function()
+    for i = 1, amountToOpen do
+        buyRemote:InvokeServer(selectedCrate)
+    end
+end)
+
+ui:Slider(crates, "Auto Open Speed", 0.01, 2.00, 1.00, function(val)
+    autoSpeed = val
+end)
+
+local auto1 = false
+
+ui:Toggle(crates, "Auto Open 1 Crate", function(state)
+    auto1 = state
+    if state then
+        task.spawn(function()
+            while auto1 do
+                buyRemote:InvokeServer(selectedCrate)
+                task.wait(autoSpeed)
+            end
+        end)
+    end
+end)
+
+local tpTab = ui:Tab(win, "Teleporter")
+
+local target = nil
+local mode = "Front"
+local tpOn = false
+local tpConn
+
+local function players()
+    local t = {}
+    for _,p in ipairs(game.Players:GetPlayers()) do
+        table.insert(t, p.Name)
+    end
+    return t
+end
+
+local playerDrop = ui:Dropdown(win, tpTab, "Select Player", players(), function(sel)
+    target = sel
+end)
+
+task.spawn(function()
+    while true do
+        playerDrop.Update(players())
+        task.wait(1)
+    end
+end)
+
+ui:Dropdown(win, tpTab, "Teleport Mode", {"Front","Back"}, function(sel)
+    mode = sel
+end)
+
+local function startTP()
+    if tpConn then tpConn:Disconnect() end
+
+    tpConn = game:GetService("RunService").Heartbeat:Connect(function()
+        if not tpOn or not target then return end
+
+        local lp = game.Players.LocalPlayer
+        local char = lp.Character
+        local root = char and char:FindFirstChild("HumanoidRootPart")
+        if not root then return end
+
+        local t = game.Players:FindFirstChild(target)
+        if not t then return end
+
+        local tc = t.Character
+        local tr = tc and tc:FindFirstChild("HumanoidRootPart")
+        if not tr then return end
+
+        local off = (mode == "Front") and -3 or 3
+        root.CFrame = CFrame.new(tr.Position + tr.CFrame.LookVector * off)
+    end)
+end
+
+ui:Toggle(tpTab, "Teleport To Player", function(state)
+    tpOn = state
+    if state then
+        startTP()
+    else
+        if tpConn then
+            tpConn:Disconnect()
+            tpConn = nil
+        end
+    end
+end)
