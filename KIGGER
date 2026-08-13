@@ -1,4 +1,4 @@
--- nigger you better not skid you nigger pigger digger sigger igger sicker licker nicker snicker
+-- nigger digger pigger dont skid nigger snicker
 
 local ui = {}
 
@@ -10,29 +10,9 @@ function ui:Window(title)
     main.Size = UDim2.new(0,420,0,360)
     main.Position = UDim2.new(.5,-210,.5,-180)
     main.BackgroundColor3 = Color3.fromRGB(0,0,0)
-    main.Active = true
-    main.Draggable = true
     main.ZIndex = 10
     main.Parent = gui
     Instance.new("UICorner", main).CornerRadius = UDim.new(0,12)
-
-    local outline = Instance.new("Frame")
-    outline.Size = UDim2.new(1,8,1,8)
-    outline.Position = UDim2.new(0,-4,0,-4)
-    outline.BackgroundColor3 = Color3.fromRGB(255,0,0)
-    outline.BorderSizePixel = 0
-    outline.ZIndex = 9
-    outline.Parent = main
-    Instance.new("UICorner", outline).CornerRadius = UDim.new(0,14)
-
-    task.spawn(function()
-        local h = 0
-        while outline.Parent do
-            h = (h + 1) % 360
-            outline.BackgroundColor3 = Color3.fromHSV(h/360,1,1)
-            task.wait(.02)
-        end
-    end)
 
     local titleLabel = Instance.new("TextLabel")
     titleLabel.Size = UDim2.new(1,0,0,45)
@@ -43,6 +23,35 @@ function ui:Window(title)
     titleLabel.TextColor3 = Color3.new(1,1,1)
     titleLabel.ZIndex = 10
     titleLabel.Parent = main
+
+    local dragging = false
+    local dragStart, startPos
+
+    titleLabel.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            dragging = true
+            dragStart = input.Position
+            startPos = main.Position
+        end
+    end)
+
+    titleLabel.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            dragging = false
+        end
+    end)
+
+    game:GetService("UserInputService").InputChanged:Connect(function(input)
+        if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+            local delta = input.Position - dragStart
+            main.Position = UDim2.new(
+                startPos.X.Scale,
+                startPos.X.Offset + delta.X,
+                startPos.Y.Scale,
+                startPos.Y.Offset + delta.Y
+            )
+        end
+    end)
 
     local tabs = Instance.new("Frame")
     tabs.Size = UDim2.new(0,130,1,-45)
@@ -145,6 +154,8 @@ function ui:Button(page, name, callback)
     Instance.new("UICorner", b).CornerRadius = UDim.new(0,10)
 
     b.MouseButton1Click:Connect(callback)
+
+    return b
 end
 
 function ui:Dropdown(win, page, name, list, callback)
@@ -388,41 +399,48 @@ local crateList = {
 }
 
 local selectedCrate = crateList[1]
-local amountToOpen = 1
+local selectedAmount = 1
 local autoSpeed = 1.00
 
-local crateDrop = ui:Dropdown(win, crates, "Select Crate", crateList, function(sel)
+ui:Dropdown(win, crates, "Select Crate", crateList, function(sel)
     selectedCrate = sel
 end)
 
-ui:Slider(crates, "Crates To Open", 1, 50, 1, function(val)
-    amountToOpen = val
+ui:Slider(crates, "Selected Amount", 1, 50, 1, function(val)
+    selectedAmount = math.floor(val)
 end)
 
 local buyRemote = remotes:WaitForChild("BuyCase")
 
-ui:Button(crates, "Buy 1 Crate", function()
-    buyRemote:InvokeServer(selectedCrate)
+ui:Button(crates, "Open 1 Crate", function()
+    local args = { selectedCrate, 1 }
+    buyRemote:InvokeServer(unpack(args))
 end)
 
-ui:Button(crates, "Buy " .. tostring(amountToOpen) .. " Crates", function()
-    for i = 1, amountToOpen do
-        buyRemote:InvokeServer(selectedCrate)
-    end
+local openSelectedBtn = ui:Button(crates, "Open " .. selectedAmount .. " Crates", function()
+    local args = { selectedCrate, selectedAmount }
+    buyRemote:InvokeServer(unpack(args))
 end)
+
+ui:Slider(crates, "Selected Amount", 1, 50, 1, function(val)
+    selectedAmount = math.floor(val)
+    openSelectedBtn.Text = "Open " .. selectedAmount .. " Crates"
+end)
+
 
 ui:Slider(crates, "Auto Open Speed", 0.01, 2.00, 1.00, function(val)
     autoSpeed = val
 end)
 
-local auto1 = false
+local autoSelected = false
 
-ui:Toggle(crates, "Auto Open 1 Crate", function(state)
-    auto1 = state
+ui:Toggle(crates, "Auto Open Selected Amount", function(state)
+    autoSelected = state
     if state then
         task.spawn(function()
-            while auto1 do
-                buyRemote:InvokeServer(selectedCrate)
+            while autoSelected do
+                local args = { selectedCrate, selectedAmount }
+                buyRemote:InvokeServer(unpack(args))
                 task.wait(autoSpeed)
             end
         end)
@@ -492,4 +510,13 @@ ui:Toggle(tpTab, "Teleport To Player", function(state)
             tpConn = nil
         end
     end
+end)
+
+task.spawn(function()
+    local vu = game:GetService("VirtualUser")
+    game:GetService("Players").LocalPlayer.Idled:Connect(function()
+        vu:Button2Down(Vector2.new(0,0), workspace.CurrentCamera.CFrame)
+        task.wait(1)
+        vu:Button2Up(Vector2.new(0,0), workspace.CurrentCamera.CFrame)
+    end)
 end)
